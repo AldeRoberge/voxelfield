@@ -148,7 +148,7 @@ namespace Swihoni.Sessions
                         m_EmptyClientCommands.Deserialize(reader);
                         if (CanSetupNewPlayer(serverPlayer))
                         {
-                            Debug.Log($"[{GetType().Name}] Setting up new player for connection: {fromPeer.EndPoint}, allocated id is: {clientId}");
+                            Debug.Log($"[{GetType().Name}] Setting up new player for connection: {fromPeer.Address}, allocated id is: {clientId}");
                             var modifyContext = new SessionContext(this, serverSession, playerId: clientId, player: serverPlayer);
                             SetupNewPlayer(modifyContext);
                         }
@@ -174,7 +174,7 @@ namespace Swihoni.Sessions
             }
             catch (Exception exception)
             {
-                Debug.LogError($"Exception while handling packet from: {fromPeer.EndPoint}: {exception}");
+                Debug.LogError($"Exception while handling packet from: {fromPeer.Address}: {exception}");
                 DisconnectPeerSafely("Internal server error", fromPeer);
             }
         }
@@ -189,7 +189,7 @@ namespace Swihoni.Sessions
             }
             catch (Exception exception)
             {
-                Debug.LogError($"Exception disconnecting graciously: {peer.EndPoint}: {exception}");
+                Debug.LogError($"Exception disconnecting graciously: {peer.Address}: {exception}");
                 m_Socket.NetworkManager.DisconnectPeerForce(peer);
             }
         }

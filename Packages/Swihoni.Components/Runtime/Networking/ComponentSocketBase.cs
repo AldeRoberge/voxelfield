@@ -42,19 +42,19 @@ namespace Swihoni.Components.Networking
                 EnableStatistics = true,
                 UpdateTime = 1,
                 ChannelsCount = 4,
-                IPv6Enabled = IPv6Mode.Disabled,
+                IPv6Enabled = false,
                 ReuseAddress = true,
 #if UNITY_EDITOR
                 DisconnectTimeout = int.MaxValue,
 #endif
             };
             m_Listener.NetworkReceiveEvent += Receive;
-            m_Listener.PeerConnectedEvent += peer => Debug.Log($"[{GetType().Name}] Connected: {peer.EndPoint}");
-            m_Listener.PeerDisconnectedEvent += (peer, info) => Debug.Log($"[{GetType().Name}] Disconnected: {peer.EndPoint}");
+            m_Listener.PeerConnectedEvent += peer => Debug.Log($"[{GetType().Name}] Connected: {peer.Address}");
+            m_Listener.PeerDisconnectedEvent += (peer, info) => Debug.Log($"[{GetType().Name}] Disconnected: {peer.Address}");
             m_StartTime = Time.realtimeSinceStartup;
         }
 
-        private void Receive(NetPeer fromPeer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+        private void Receive(NetPeer fromPeer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod)
         {
             try
             {

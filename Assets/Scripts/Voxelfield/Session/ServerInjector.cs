@@ -40,7 +40,9 @@ namespace Voxelfield.Session
     [Serializable]
     public class SteamAuthenticationTicketProperty : StringProperty
     {
-        public SteamAuthenticationTicketProperty() : base(512) { }
+        public SteamAuthenticationTicketProperty() : base(512)
+        {
+        }
     }
 
     public class ServerInjector : Injector
@@ -78,7 +80,7 @@ namespace Voxelfield.Session
 
                 var changed = Session.GetLatestSession().Require<OrderedVoxelChangesProperty>();
                 changed.Append(change);
-                change.undo = new List<(Chunk, Position3Int, Voxel)>((int) change.magnitude.GetValueOrDefault(1).Square());
+                change.undo = new List<(Chunk, Position3Int, Voxel)>((int)change.magnitude.GetValueOrDefault(1).Square());
                 m_MasterChanges.Append(change);
                 Apply();
             }
@@ -86,8 +88,8 @@ namespace Voxelfield.Session
 
         public override void OnThrowablePopped(ThrowableModifierBehavior throwableBehavior)
         {
-            var center = (Position3Int) throwableBehavior.transform.position;
-            var change = new VoxelChange {position = center, magnitude = throwableBehavior.Radius * -0.4f, replace = true, modifiesBlocks = true, form = VoxelVolumeForm.Spherical};
+            var center = (Position3Int)throwableBehavior.transform.position;
+            var change = new VoxelChange { position = center, magnitude = throwableBehavior.Radius * -0.4f, replace = true, modifiesBlocks = true, form = VoxelVolumeForm.Spherical };
             ApplyVoxelChanges(change);
         }
 
@@ -128,7 +130,7 @@ namespace Voxelfield.Session
                         m_SteamPlayerIds.Remove(peer);
                     }
                 }
-                else Debug.LogError($"Peer {peer.EndPoint} did not have steam id!");
+                else Debug.LogError($"Peer {peer.Address} did not have steam id!");
             }
         }
 
@@ -165,6 +167,7 @@ namespace Voxelfield.Session
         protected override void OnServerNewConnection(ConnectionRequest socketRequest)
         {
             RequestConnectionComponent request = m_RequestConnection;
+
             void Reject(string message)
             {
                 try
@@ -179,10 +182,10 @@ namespace Voxelfield.Session
                     socketRequest.RejectForce();
                 }
             }
+
             try
             {
-                int nextPeerId = ((NetworkedSessionBase) Session).Socket.NetworkManager.PeekNextPeerId();
-                if (nextPeerId >= SessionBase.MaxPlayers - 1)
+                if (((NetworkedSessionBase)Session).Socket.NetworkManager.ConnectedPeersCount >= SessionBase.MaxPlayers)
                 {
                     Reject("Too many players are already connected to the server!");
                     return;
@@ -258,12 +261,12 @@ namespace Voxelfield.Session
             if (!(m_UseSteam = Config.Active.authenticateSteam)) return;
             try
             {
-                var server = (Server) Session;
+                var server = (Server)Session;
                 IPEndPoint serverEndPoint = server.IpEndPoint;
                 var parameters = new SteamServerInit
                 {
                     DedicatedServer = true,
-                    GamePort = (ushort) serverEndPoint.Port, QueryPort = 27016,
+                    GamePort = (ushort)serverEndPoint.Port, QueryPort = 27016,
                     Secure = true,
                     VersionString = Application.version,
                     GameDescription = Application.productName,
@@ -285,7 +288,7 @@ namespace Voxelfield.Session
             catch (Exception exception)
             {
                 string message = $"Failed to initialize Steam: {exception.Message}",
-                       separator = string.Concat(Enumerable.Repeat("@", message.Length));
+                    separator = string.Concat(Enumerable.Repeat("@", message.Length));
                 Debug.LogError($"{separator}\n{message}\n{separator}");
             }
         }
@@ -300,13 +303,15 @@ namespace Voxelfield.Session
                     Debug.Log($"Successfully validated {playerSteamId}");
                 }
                 else Debug.LogError($"Peer not found for Steam ID {playerSteamId}");
+
                 return;
             }
+
             try
             {
                 if (m_SteamPlayerIds.TryGetReverse(serverSteamId, out NetPeer peer))
                 {
-                    var server = (Server) Session;
+                    var server = (Server)Session;
                     server.Socket.NetworkManager.DisconnectPeer(peer);
                     m_SteamPlayerIds.Remove(playerSteamId);
                     Debug.LogWarning($"Disconnected Steam ID {playerSteamId} with invalid authentication: {response}");
@@ -333,7 +338,7 @@ namespace Voxelfield.Session
         }
 
         public override bool ShouldSetupPlayer(Container serverPlayer) => base.ShouldSetupPlayer(serverPlayer)
-                                                                       && (!m_UseSteam || serverPlayer.Require<SteamIdProperty>().WithValue);
+                                                                          && (!m_UseSteam || serverPlayer.Require<SteamIdProperty>().WithValue);
 
         public override string GetUsername(in SessionContext context) => m_UseSteam ? null : base.GetUsername(context);
 
@@ -356,13 +361,13 @@ namespace Voxelfield.Session
             {
                 for (var f = 0.1f; f < move.GetPlayerHeight(); f++)
                 {
-                    Vector3 origin = move + new Vector3 {y = f};
+                    Vector3 origin = move + new Vector3 { y = f };
                     int count = context.PhysicsScene.Raycast(origin, Vector3.up, CachedHits, float.PositiveInfinity, 1 << 15);
                     if (CachedHits.TryClosest(count, out RaycastHit hit) && hit.normal.y > Mathf.Epsilon)
                     {
                         float distance = hit.distance;
-                        move.position.Value += new Vector3 {y = distance + 0.05f};
-                        if (f > 1.0f && m_MapManager.ChunkManager.GetVoxel((Position3Int) origin) is {IsBreathable: false})
+                        move.position.Value += new Vector3 { y = distance + 0.05f };
+                        if (f > 1.0f && m_MapManager.ChunkManager.GetVoxel((Position3Int)origin) is { IsBreathable: false })
                             Suffocate(context, OutsideBoundDamage);
                         break;
                     }
@@ -371,9 +376,9 @@ namespace Voxelfield.Session
             Physics.queriesHitBackfaces = false;
 
             if (m_MapManager.Map.terrainGeneration.upperBreakableHeight.TryWithValue(out int upperLimit)
-             && context.sessionContainer.Require<ModeIdProperty>() == ModeIdProperty.SecureArea
-             && context.sessionContainer.Require<SecureAreaComponent>().roundTime.WithValue
-             && move.position.Value.y > upperLimit + 5) Suffocate(context);
+                && context.sessionContainer.Require<ModeIdProperty>() == ModeIdProperty.SecureArea
+                && context.sessionContainer.Require<SecureAreaComponent>().roundTime.WithValue
+                && move.position.Value.y > upperLimit + 5) Suffocate(context);
 
             // Vector3 normal = context.session.GetPlayerModifier(context.player, context.playerId).Movement.Hit.
             // Debug.Log(normal);
